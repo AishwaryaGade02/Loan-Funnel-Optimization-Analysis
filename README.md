@@ -1,5 +1,4 @@
-# 📊 Loan Funnel Optimization & A/B Testing Dashboard
-
+# 📊 Loan Funnel Analysis 
 This is a full end-to-end data analytics project simulating a **loan application funnel** at a fintech or lending company. It includes:
 
 ✅ Funnel performance monitoring  
