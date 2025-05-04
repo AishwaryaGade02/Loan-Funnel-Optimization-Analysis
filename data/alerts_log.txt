@@ -1,2 +1,4 @@
 [2025-04-29 11:52:37] ⚠️ ALERT: Approval rate dropped to 52.50%
 [2025-04-29 11:52:37] ⚠️ ALERT: Funding rate dropped to 52.50%
+[2025-05-02 15:08:03] ⚠️ ALERT: Approval rate dropped to 43.24%
+[2025-05-02 15:08:03] ⚠️ ALERT: Funding rate dropped to 43.24%
