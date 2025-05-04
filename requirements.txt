@@ -5,3 +5,5 @@ matplotlib
 faker
 scipy
 statsmodels
+scikit-learn
+seaborn
