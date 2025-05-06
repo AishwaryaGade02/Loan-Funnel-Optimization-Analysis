@@ -122,11 +122,20 @@ def show_approval_analysis(DB_PATH):
         # Get the interaction key based on selected factors
         interaction_keys = {
             ('Age', 'DTI'): 'age_group_vs_dti_group',
+            ('Age','Loan Amount'):'age_group_vs_loan_amount_group',
             ('Age', 'Credit Score'): 'age_group_vs_credit_group',
+            ('Age', 'Income'): 'age_group_vs_income_band',
+            ('Age','Employment'):'age_group_vs_employment_status',
             ('DTI', 'Credit Score'): 'dti_group_vs_credit_group',
+            ('DTI','Loan Amount'): 'dti_group_vs_loan_amount_group',
+            ('DTI','Employment'): 'dti_group_vs_employment_status',
             ('Credit Score', 'Loan Amount'): 'credit_group_vs_loan_amount_group',
             ('Income', 'Credit Score'): 'income_band_vs_credit_group',
-            ('Income', 'DTI'): 'income_band_vs_dti_group'
+            ('Income', 'DTI'): 'income_band_vs_dti_group',
+            ('Credit Score','Employment'): 'credit_group_vs_employment_status',
+            ('Income','Employment'):'income_band_vs_employment_status',
+            ('Loan Amount','Employment'):'loan_amount_group_vs_employment_status'
+
         }
 
         # Try both combinations of factors to handle order differences

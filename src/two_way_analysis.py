@@ -53,6 +53,7 @@ def two_interaction(db_path="data/loan_funnel.db", group1=None, group2=None):
                 when income between 40000 and 80000 then 'Mid (40k-80k)'
                 else 'High (80k+)'
             END as income_band,
+            employment_status,
             CASE WHEN decision_outcome = 'Approved' THEN 1 ELSE 0 END as approved,
             CASE WHEN funding_status = 'Funded' THEN 1 ELSE 0 END as funded
         FROM loan_applications
@@ -82,11 +83,18 @@ def two_interaction(db_path="data/loan_funnel.db", group1=None, group2=None):
     else:
         interactions = {
             'age_group_vs_dti_group': ('age_group', 'dti_group'),
-            'dti_group_vs_credit_group': ('dti_group', 'credit_group'),
-            'credit_group_vs_loan_amount_group': ('credit_group', 'loan_amount_group'),
             'age_group_vs_credit_group': ('age_group', 'credit_group'),
+            'age_group_vs_income_band':('age_group','income_band'),
+            'age_group_vs_loan_amount_group':('age_group','loan_amount_group'),
+            'age_group_vs_employment':('age_group','employment_status'),
+            'dti_group_vs_credit_group': ('dti_group', 'credit_group'),
+            'dti_group_vs_loan_amount_band':('dti_group','loan_amount_band'),
+            'dti_group_vs_employment':('dti_group','employment_status'),
+            'credit_group_vs_loan_amount_group': ('credit_group', 'loan_amount_group'),
+            'credit_group_vs_emplyment_status':('credit_group','employment_status'),
             'income_band_vs_dti_group': ('income_band', 'dti_group'),
-            'income_band_vs_credit_group': ('income_band', 'credit_group')
+            'income_band_vs_credit_group': ('income_band', 'credit_group'),
+            'income_band_vs_employment':('income_band','employment_status')
         }
         
         results = {}
@@ -148,9 +156,18 @@ def get_all_key_interactions(db_path="data/loan_funnel.db"):
     # Define the key interactions you want to analyze
     interactions_to_analyze = [
         ('age_group', 'dti_group'),
-        ('dti_group', 'credit_group'),
-        ('credit_group', 'loan_amount_group'),
+        ('age_group','loan_amount_group'),
         ('age_group', 'credit_group'),
+        ('age_group','income_band'),
+        ('age_group','employment_status'),
+        ('dti_group', 'credit_group'),
+        ('dti_group','loan_amount_group'),
+        ('dti_group','employment_status'),
+        ('credit_group','income_band'),
+        ('credit_group','employment_status'),
+        ('credit_group', 'loan_amount_group'),
+        ('income_band','employment_status'),
+        ('loan_amount_group','income_band'),
         ('income_band', 'credit_group'),
         ('income_band', 'dti_group')
     ]

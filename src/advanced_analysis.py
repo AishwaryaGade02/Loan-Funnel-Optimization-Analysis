@@ -39,7 +39,12 @@ def cohort_analysis(db_path="data/loan_funnel.db"):
     From loan_applications
     Where funnel_stage = "Underwriting Review" or funnel_stage = "Funded"
     Group By credit_band
-    Order By credit_band
+    Order By (case when credit_score="Excellent (800+)" then 1
+                   when credit_score="Very Good (740-799)" then 2
+                   when credit_score="Good (670-739)" then 3
+                   when credit_score="Fair (580-669)" then 4
+                   when credit_score="Poor (<580)" then 5
+                end)
     """
     query_income = """
     Select 
@@ -53,7 +58,10 @@ def cohort_analysis(db_path="data/loan_funnel.db"):
     From loan_applications
     Where funnel_stage = "Underwriting Review" or funnel_stage = "Funded"
     Group by income_band
-    Order by income_band    
+    Order by (case when income_band="High (80k+)" then 1
+                   when income_band="Mid (40k-80k)" then 2
+                   when income_band="Low (<40k)" then 3
+                end)    
     """
     query_emp = """
     Select employment_status,
@@ -78,7 +86,13 @@ def cohort_analysis(db_path="data/loan_funnel.db"):
     count(*) as applicant_count
     From loan_applications
     Where funnel_stage = "Underwriting Review" or funnel_stage = "Funded"
-    Group by loan_amount_band
+    Group by (case when loan_amount_band="High-End Loan" then 1
+                   when loan_amount_band="Very Large Loan" then 2
+                   when loan_amount_band="Large Loan" then 3
+                   when loan_amount_band="Medium Loan" then 4
+                   when loan_amount_band="Small Loan" then 5
+                   when loan_amount_band="Very Small Loan" then 6
+                end)
     
     """
     query_age="""
@@ -95,7 +109,13 @@ def cohort_analysis(db_path="data/loan_funnel.db"):
     count(*) as applicant_count
     From loan_applications
     Where funnel_stage = "Underwriting Review" or funnel_stage = "Funded"
-    Group by Age_band
+    Group by (case when Age_band="65+" then 1
+                   when Age_band="56-65" then 2
+                   when Age_band="46-55" then 3
+                   when Age_band="36-45" then 4
+                   when Age_band="26-35" then 5
+                   when Age_band="18-25" then 6
+                end)
     """
 
 
