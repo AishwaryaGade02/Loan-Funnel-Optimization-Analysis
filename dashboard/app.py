@@ -46,7 +46,11 @@ from src.report_alerts import (
 )
 
 from src.predictive_analysis import run_predictive_analysis
-from src.economic_impact import run_economic_impact_analysis, get_priority_cohorts, create_cohort_labels
+from src.economic_impact import (
+    run_economic_impact_analysis, 
+    get_priority_cohorts, 
+    create_cohort_labels
+)
 
 st.set_page_config(page_title="Loan Funnel Analytics", layout="wide")
 
@@ -143,10 +147,10 @@ if os.path.exists(DB_PATH):
     fig.update_traces(line_color='#1f77b4', line_width=3)
     st.plotly_chart(fig, use_container_width=True)
 
-    # ========================= Feature Analysis =========================
-    st.header("🔍 Feature-Based Analysis")
+    # ========================= Approval Analysis =========================
+    st.header("🔍 Approval Analysis")
     
-    st.subheader("Approval Rates by Key Features")
+    st.subheader("Average Values for Approvals")
     feat_df = get_features_vs_approval(DB_PATH)
     st.dataframe(
         feat_df.style.format({
@@ -157,7 +161,7 @@ if os.path.exists(DB_PATH):
     )
 
     # ========================= Cohort Analysis =========================
-    st.header("👥 Cohort Analysis")
+    st.subheader("👥 Approval Rate by Each Features")
     
     credit_df, income_df, emp_df, loan_amo_df, age_df = cohort_analysis(DB_PATH)
 
@@ -165,7 +169,7 @@ if os.path.exists(DB_PATH):
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Income", "Credit Score", "Employment", "Loan Amount", "Age"])
     
     with tab1:
-        st.subheader("By Income Band")
+        st.markdown("##### By Income Band")
         st.dataframe(
             income_df.style.background_gradient(
                 subset=['approval_rate'],
@@ -174,7 +178,7 @@ if os.path.exists(DB_PATH):
         )
 
     with tab2:
-        st.subheader("By Credit Score Band")
+        st.markdown("##### By Credit Score Band")
         st.dataframe(
             credit_df.style.background_gradient(
                 subset=['approval_rate'],
@@ -183,7 +187,7 @@ if os.path.exists(DB_PATH):
         )
 
     with tab3:
-        st.subheader("By Employment Status")
+        st.markdown("##### By Employment Status")
         st.dataframe(
             emp_df.style.background_gradient(
                 subset=['approval_rate'],
@@ -192,7 +196,7 @@ if os.path.exists(DB_PATH):
         )
 
     with tab4:
-        st.subheader("By Loan Amount")
+        st.markdown("##### By Loan Amount")
         st.dataframe(
             loan_amo_df.style.background_gradient(
                 subset=['approval_rate'],
@@ -201,7 +205,7 @@ if os.path.exists(DB_PATH):
         )
 
     with tab5:
-        st.subheader("By Age Group")
+        st.markdown("##### By Age Group")
         st.dataframe(
             age_df.style.background_gradient(
                 subset=['approval_rate'],
@@ -210,92 +214,92 @@ if os.path.exists(DB_PATH):
         )
 
     # ========================= Advanced Analysis =========================
-    st.header("🔬 Advanced Analytics")
-    
-    # Two-way Interaction Analysis
-    st.subheader("Two-way Interaction Analysis")
-    
-    # Get all key interactions
+    # ========================= Multi-Factor Analysis Explorer =========================
+# New section that provides more flexible analysis
+    st.subheader("🧩 Multi-Factor Loan Approval Explorer")
+
+# Interactive feature selection
+    #st.subheader("Loan Approval Rate by Multiple Factors")
     all_interactions = get_all_key_interactions(DB_PATH)
+    col1, col2 = st.columns(2)
+    with col1:
+        primary_factor = st.selectbox(
+        "Primary Factor",
+        options=["Age", "DTI", "Credit Score", "Income", "Loan Amount", "Employment"],
+        index=2,
+        key="primary_approval_factor"
+    )
+
+    with col2:
+        secondary_factor = st.selectbox(
+        "Secondary Factor",
+        options=["Age", "DTI", "Credit Score", "Income", "Loan Amount", "Employment"],
+        index=1,
+        key="secondary_approval_factor"
+    )
+
+# Factor mapping dictionary
+    factor_map = {
+    "Age": "age_group",
+    "DTI": "dti_group",
+    "Credit Score": "credit_group",
+    "Income": "income_band",
+    "Loan Amount": "loan_amount_group",
+    "Employment": "employment_status"
+}
+
+# Get the interaction key based on selected factors
+    interaction_keys = {
+    ('Age', 'DTI'): 'age_group_vs_dti_group',
+    ('Age', 'Credit Score'): 'age_group_vs_credit_group',
+    ('DTI', 'Credit Score'): 'dti_group_vs_credit_group',
+    ('Credit Score', 'Loan Amount'): 'credit_group_vs_loan_amount_group',
+    ('Income', 'Credit Score'): 'income_band_vs_credit_group',
+    ('Income', 'DTI'): 'income_band_vs_dti_group'
+}
+
+# Try both combinations of factors to handle order differences
+    interaction_key = interaction_keys.get((primary_factor, secondary_factor)) or interaction_keys.get((secondary_factor, primary_factor))
+
+    if interaction_key and interaction_key in all_interactions:
+        interaction_df = all_interactions[interaction_key]
+        var1 = factor_map[primary_factor]
+        var2 = factor_map[secondary_factor]
     
-    # Create tabs for different interactions
-    interaction_tabs = st.tabs([
-        "Age vs DTI",
-        "DTI vs Credit Score",
-        "Credit Score vs Loan Amount",
-        "Age vs Credit Score",
-        "Income vs Credit Score",
-        "Income vs DTI"
-    ])
-    
-    tab_data = [
-        ('age_group_vs_dti_group', 'age_group', 'dti_group'),
-        ('dti_group_vs_credit_group', 'dti_group', 'credit_group'),
-        ('credit_group_vs_loan_amount_group', 'credit_group', 'loan_amount_group'),
-        ('age_group_vs_credit_group', 'age_group', 'credit_group'),
-        ('income_band_vs_credit_group', 'income_band', 'credit_group'),
-        ('income_band_vs_dti_group', 'income_band', 'dti_group')
-    ]
-    
-    for tab, (interaction_key, var1_col, var2_col) in zip(interaction_tabs, tab_data):
-        with tab:
-            interaction_df = all_interactions[interaction_key]
-            
-            # Display the data table
-            st.dataframe(
-                interaction_df.style.background_gradient(
-                    subset=['approval_rate'],
-                    cmap='RdYlGn'
-                ).format({
-                    'approval_rate': '{:.1f}%',
-                    'funding_rate': '{:.1f}%',
-                    'total_applications': '{:,}',
-                    'approved_count': '{:,}',
-                    'funded_count': '{:,}'
-                })
-            )
-            
-            # Create and display heatmap
-            fig = visualize_interaction(interaction_df, var1_col, var2_col)
+    # Create heatmap
+        if var1 in interaction_df.columns and var2 in interaction_df.columns:
+            fig = visualize_interaction(interaction_df, var1, var2)
             st.plotly_chart(fig, use_container_width=True)
-            
-            # Key insights
+        
+        # Key insights
             st.markdown("**Key Insights:**")
-            
-            # Find highest and lowest approval rates
+        
+        # Find highest and lowest approval rates
             highest = interaction_df.nlargest(3, 'approval_rate')
             lowest = interaction_df.nsmallest(3, 'approval_rate')
-            
+        
             col1, col2 = st.columns(2)
-            
+        
             with col1:
                 st.markdown("**Highest Approval Rates:**")
                 for _, row in highest.iterrows():
-                    st.write(f"- {row[var1_col]} × {row[var2_col]}: {row['approval_rate']:.1f}%")
-            
+                    st.write(f"- {row[var1]} × {row[var2]}: {row['approval_rate']:.1f}%")
+        
             with col2:
                 st.markdown("**Lowest Approval Rates:**")
                 for _, row in lowest.iterrows():
-                    st.write(f"- {row[var1_col]} × {row[var2_col]}: {row['approval_rate']:.1f}%")
+                    st.write(f"- {row[var1]} × {row[var2]}: {row['approval_rate']:.1f}%")
+        else:
+            st.warning(f"Data not available for {primary_factor} vs {secondary_factor}. Try another combination.")
+    else:
+        st.warning(f"Interaction data not available for {primary_factor} vs {secondary_factor}. Try another combination.")
 
-    # Complex Interaction Analysis
-    st.subheader("Complex Interaction Analysis")
-    df = interaction_analysis(DB_PATH)
-    st.dataframe(df)
-
-    # Risk Analysis
-    st.subheader("Risk Metrics Analysis")
-    risk_df = risk_metric(DB_PATH)
-    st.dataframe(
-    risk_df.style.background_gradient(
-        subset=['approval_rate'],  # Changed from 'risk_score' to 'approval_rate'
-        cmap='RdYlGn'  # Changed to RdYlGn for approval rates (green=good, red=bad)
-    ).format({'approval_rate': '{:.1f}%'})  # Added formatting for approval rate
-)
+    
 
     # ======================================================================
     # PREDICTIVE ANALYSIS SECTION (Keep as is)
-    st.header("🤖 Predictive Analytics")
+    st.header("🤖 Dropout Analysis")
+    st.markdown("---")
     loan_data = pd.read_csv('./data/loan_funnel_data.csv')
     results = run_predictive_analysis(loan_data)
 
@@ -304,8 +308,8 @@ if os.path.exists(DB_PATH):
     analyzed_df = results['dataframe']
 
     # Title
-    st.title("🎯 Predictive Drop-off Analysis")
-    st.markdown("---")
+    #st.title("🎯 Predictive Drop-off Analysis")
+    
 
     # Key Metrics
     col2, col3, col4 = st.columns(3)
@@ -319,38 +323,61 @@ if os.path.exists(DB_PATH):
         st.metric("High Risk Applications", high_risk)
 
     # Cohort Analysis Section
-    st.header("📊 Cohort Analysis")
+    # Cohort Analysis Section
+    st.subheader("📊 Dropout Analysis Explorer")
 
-    # Filters
-    col1, col2, col3 = st.columns(3)
+# Filters - Add new filters for income, loan amount, and employment
+    col1, col2 = st.columns(2)
     with col1:
         selected_age = st.multiselect(
-            "Select Age Groups",
-            options=cohort_analysis['age_group'].unique(),
-            default=cohort_analysis['age_group'].unique()
-        )
+        "Select Age Groups",
+        options=cohort_analysis['age_group'].unique(),
+        default=cohort_analysis['age_group'].unique()[0]
+    )
+    
+        selected_income = st.multiselect(
+        "Select Income Bands",
+        options=cohort_analysis['income_band'].unique(),
+        default=cohort_analysis['income_band'].unique()[0]
+    )
+    
+        selected_employment = st.multiselect(
+        "Select Employment Status",
+        options=cohort_analysis['employment_status'].unique(),
+        default=cohort_analysis['employment_status'].unique()[0]
+    )
+
     with col2:
         selected_dti = st.multiselect(
-            "Select DTI Groups",
-            options=cohort_analysis['dti_group'].unique(),
-            default=cohort_analysis['dti_group'].unique()
-        )
-    with col3:
+        "Select DTI Groups",
+        options=cohort_analysis['dti_group'].unique(),
+        default=cohort_analysis['dti_group'].unique()[0]
+    )
+    
         selected_credit = st.multiselect(
-            "Select Credit Groups",
-            options=cohort_analysis['credit_group'].unique(),
-            default=cohort_analysis['credit_group'].unique()
-        )
+        "Select Credit Groups",
+        options=cohort_analysis['credit_group'].unique(),
+        default=cohort_analysis['credit_group'].unique()[0]
+    )
+    
+        selected_loan_amount = st.multiselect(
+        "Select Loan Amount Groups",
+        options=cohort_analysis['loan_amount_group'].unique(),
+        default=cohort_analysis['loan_amount_group'].unique()[0]
+    )
 
-    # Filter cohort data
+# Filter cohort data - update to include new filters
     filtered_cohort = cohort_analysis[
-        (cohort_analysis['age_group'].isin(selected_age)) &
-        (cohort_analysis['dti_group'].isin(selected_dti)) &
-        (cohort_analysis['credit_group'].isin(selected_credit))
-    ]
+    (cohort_analysis['age_group'].isin(selected_age)) &
+    (cohort_analysis['dti_group'].isin(selected_dti)) &
+    (cohort_analysis['credit_group'].isin(selected_credit)) &
+    (cohort_analysis['income_band'].isin(selected_income)) &
+    (cohort_analysis['loan_amount_group'].isin(selected_loan_amount)) &
+    (cohort_analysis['employment_status'].isin(selected_employment))
+]
 
     # Display cohort table
-    st.subheader("Cohort Performance Metrics")
+    st.markdown("#### Dropout Performance Metrics")
     st.dataframe(
         filtered_cohort.style.background_gradient(
             subset=['abandonment_risk', 'funded'],
@@ -365,133 +392,111 @@ if os.path.exists(DB_PATH):
     )
 
     # Visualization Section
-    st.header("📈 Visualizations")
+    # In the Multi-Factor Analysis Explorer section
+    # In the Multi-Factor Analysis Explorer section
+    #st.header("🧩 Risk Analysis Explorer")
 
-    tab1, tab2, tab3, tab4 = st.tabs(["Risk Heatmap", "Funnel Performance", "Feature Importance", "Risk Distribution"])
+# Interactive feature selection for Abandonment Risk
+    st.subheader("🧩 Explore Abandonment Risk Relationships")
 
-    with tab1:
-        # Risk Heatmap
-        st.subheader("Abandonment Risk Heatmap")
-        
-        pivot_data = filtered_cohort.pivot_table(
+    col1, col2 = st.columns(2)
+    with col1:
+        primary_factor_risk = st.selectbox(
+        "Primary Factor",
+        options=["Age", "DTI", "Credit Score", "Income", "Loan Amount", "Employment"],
+        index=2,  # Default to Credit Score
+        key="primary_risk_factor"
+    )
+
+    with col2:
+        secondary_factor_risk = st.selectbox(
+        "Secondary Factor",
+        options=["Age", "DTI", "Credit Score", "Income", "Loan Amount", "Employment"],
+        index=1,  # Default to DTI
+        key="secondary_risk_factor"
+    )
+
+# Factor mapping dictionary
+    factor_map = {
+    "Age": "age_group",
+    "DTI": "dti_group",
+    "Credit Score": "credit_group",
+    "Income": "income_band",
+    "Loan Amount": "loan_amount_group",
+    "Employment": "employment_status"
+}
+
+# Create the pivot table for the selected factors
+    if primary_factor_risk in factor_map and secondary_factor_risk in factor_map:
+        primary_col = factor_map[primary_factor_risk]
+        secondary_col = factor_map[secondary_factor_risk]
+    
+    # Create pivot table for the heatmap
+        if primary_col in filtered_cohort.columns and secondary_col in filtered_cohort.columns:
+            pivot_data = cohort_analysis.pivot_table(
             values='abandonment_risk',
-            index='credit_group',
-            columns='dti_group',
+            index=primary_col,
+            columns=secondary_col,
             aggfunc='mean'
         )
         
-        fig = go.Figure(data=go.Heatmap(
+        # Create heatmap
+            fig = go.Figure(data=go.Heatmap(
             z=pivot_data.values,
             x=pivot_data.columns,
             y=pivot_data.index,
-            colorscale='RdYlGn_r',
+            colorscale='RdYlGn_r',  # Red for high risk, green for low risk
             text=[[f'{val:.1%}' for val in row] for row in pivot_data.values],
             texttemplate='%{text}',
             textfont={"size": 12},
             hoverongaps=False
         ))
         
-        fig.update_layout(
-            title='Abandonment Risk by Credit Score and DTI',
-            xaxis_title='DTI Group',
-            yaxis_title='Credit Score Group'
+            fig.update_layout(
+            title=f'Abandonment Risk by {primary_factor_risk} and {secondary_factor_risk}',
+            xaxis_title=f'{secondary_factor_risk} Group',
+            yaxis_title=f'{primary_factor_risk} Group'
         )
         
-        st.plotly_chart(fig, use_container_width=True)
-
-    with tab2:
-        # Funnel Performance
-        st.subheader("Funnel Stage Performance")
+            st.plotly_chart(fig, use_container_width=True)
         
-        funnel_metrics = filtered_cohort[['age_group', 'completed_app', 'uploaded_docs', 
-                                        'passed_underwriting', 'funded']].melt(
-            id_vars=['age_group'],
-            var_name='Stage',
-            value_name='Rate'
-        )
+        # Key insights
+            st.markdown("**Key Insights:**")
         
-        fig = px.bar(
-            funnel_metrics,
-            x='age_group',
-            y='Rate',
-            color='Stage',
-            barmode='group',
-            title='Conversion Rates by Age Group'
-        )
+        # Find highest and lowest risk segments
+            flattened = pivot_data.stack().reset_index()
+            flattened.columns = [primary_col, secondary_col, 'abandonment_risk']
         
-        fig.update_layout(yaxis_tickformat='.0%')
-        st.plotly_chart(fig, use_container_width=True)
-
-    with tab3:
-        # Feature Importance
-        st.subheader("Feature Importance by Stage")
+            highest_risk = flattened.nlargest(3, 'abandonment_risk')
+            lowest_risk = flattened.nsmallest(3, 'abandonment_risk')
         
-        fig = px.bar(
-            feature_importance,
-            x='feature',
-            y='importance',
-            color='stage',
-            barmode='group',
-            title='Model Feature Importance'
-        )
+            col1, col2 = st.columns(2)
         
-        st.plotly_chart(fig, use_container_width=True)
-
-    with tab4:
-        # Risk Distribution
-        st.subheader("Abandonment Risk Distribution")
+            with col1:
+                st.markdown("**Highest Abandonment Risk Segments:**")
+                for _, row in highest_risk.iterrows():
+                    st.write(f"- {row[primary_col]} × {row[secondary_col]}: {row['abandonment_risk']:.1%}")
+            
+            # Calculate average risk
+                avg_risk = filtered_cohort['abandonment_risk'].mean()
+                st.write(f"*Average abandonment risk: {avg_risk:.1%}*")
         
-        fig = px.histogram(
-            analyzed_df,
-            x='abandonment_risk',
-            nbins=30,
-            title='Distribution of Abandonment Risk Scores'
-        )
+            with col2:
+                st.markdown("**Lowest Abandonment Risk Segments:**")
+                for _, row in lowest_risk.iterrows():
+                    st.write(f"- {row[primary_col]} × {row[secondary_col]}: {row['abandonment_risk']:.1%}")
+            
+            # Risk differential
+                risk_diff = highest_risk.iloc[0]['abandonment_risk'] - lowest_risk.iloc[0]['abandonment_risk']
+                st.write(f"*Risk differential: {risk_diff:.1%}*")
         
-        fig.update_layout(
-            xaxis_title='Abandonment Risk Score',
-            yaxis_title='Count',
-            bargap=0.1
-        )
         
-        st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning(f"Data not available for {primary_factor_risk} vs {secondary_factor_risk}. Try another combination.")
+    else:
+        st.warning(f"Interaction data not available for {primary_factor_risk} vs {secondary_factor_risk}.")
 
-    # High Risk Segments
-    st.header("🚨 High Risk Segments")
-
-    high_risk_cohorts = cohort_analysis[cohort_analysis['abandonment_risk'] > 0.5].sort_values(
-        'abandonment_risk', ascending=False
-    ).head(10)
-
-    st.dataframe(
-        high_risk_cohorts.style.background_gradient(
-            subset=['abandonment_risk'],
-            cmap='Reds'
-        ).format({
-            'abandonment_risk': '{:.1%}',
-            'completed_app': '{:.1%}',
-            'uploaded_docs': '{:.1%}',
-            'passed_underwriting': '{:.1%}',
-            'funded': '{:.1%}'
-        })
-    )
-
-    # Insights
-    st.header("💡 Key Insights")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("Highest Risk Groups")
-        highest_risk = cohort_analysis.nlargest(3, 'abandonment_risk')
-        for _, row in highest_risk.iterrows():
-            st.write(f"- **{row['age_group']} | {row['dti_group']} | {row['credit_group']}**: {row['abandonment_risk']:.1%} risk")
-
-    with col2:
-        st.subheader("Best Performing Groups")
-        best_performing = cohort_analysis.nlargest(3, 'funded')
-        for _, row in best_performing.iterrows():
-            st.write(f"- **{row['age_group']} | {row['dti_group']} | {row['credit_group']}**: {row['funded']:.1%} funding rate")
+    
 
     # ========================= Economic Impact Analysis =========================
     st.header("💰 Economic Impact Analysis")
@@ -659,7 +664,7 @@ if os.path.exists(DB_PATH):
         st.write(f"- **{row['cohort']}**: ${row['improvement_potential']:,.0f} potential improvement")
 
     # ========================= A/B Testing Section =========================
-    st.header("🧪 A/B Testing Results")
+    st.header("🧪 Policy Comparision")
     
     st.subheader("Approval Strategy Comparison")
     exp_df = load_experiment_data(DB_PATH)
