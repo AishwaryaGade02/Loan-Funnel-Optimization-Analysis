@@ -67,7 +67,7 @@ def calculate_economic_impact(df, profit_margin=0.05):
         }
         
         # Calculate losses at each stage
-        stages = ['Application Started', 'Documents Uploaded', 'Underwriting Review', 'Approved', 'Funded']
+        stages = ['Application Started', 'Documents Uploaded', 'Underwriting Review', 'Approved']
         
         for stage in stages:
             stage_data = group[group['funnel_stage'] == stage]
@@ -82,7 +82,7 @@ def calculate_economic_impact(df, profit_margin=0.05):
         
         # Calculate total losses and potential improvements
         total_lost = sum(cohort_data[f'lost_at_{stage.lower().replace(" ", "_")}'] 
-                        for stage in stages if stage != 'Funded')
+                        for stage in stages)
         total_lost_revenue = total_lost * profit_margin
         
         cohort_data['total_lost_revenue'] = total_lost_revenue

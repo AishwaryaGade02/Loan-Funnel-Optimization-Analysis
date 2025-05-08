@@ -47,8 +47,9 @@ def show_policy_comparision(DB_PATH):
                       delta_color="normal" if approval_diff > 0 else "inverse")
         
         with col2:
-            st.metric("Funding Rate Change", f"{funding_diff:+.1f}%", 
-                      delta_color="normal" if funding_diff > 0 else "inverse")
+            funding_diff_display = 0.0 if abs(funding_diff) < 0.05 else funding_diff
+            st.metric("Funding Rate Change", f"{funding_diff_display:+.1f}%", 
+          delta_color="normal" if funding_diff > 0 else "inverse")
         
         with col3:
             st.metric("Default Rate Change", f"{default_diff:+.1f}%", 

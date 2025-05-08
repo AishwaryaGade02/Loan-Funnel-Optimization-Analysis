@@ -25,9 +25,11 @@ class PredictiveDropoffAnalysis:
         else:
             data = self.df.copy()
         
-        features = ['credit_score', 'income', 'age', 'dti_ratio', 'loan_amount']
+        features = ['credit_score', 'income', 'age', 'dti_ratio', 'loan_amount','employment_status']
         X = data[features]
         y = data[stage_col]
+
+        X = pd.get_dummies(X,columns=["employment_status"])
         
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
@@ -43,39 +45,55 @@ class PredictiveDropoffAnalysis:
         return model, scaler, probabilities
     
     def train_all_models(self):
-        """Train models for all stages"""
+        """Train models for all stages in the funnel"""
         # Stage 1: Application completion
         self.models['app_completion'], self.scalers['app_completion'], self.probabilities['app_completion'] = \
-            self.create_dropoff_model('completed_app')
-        
+        self.create_dropoff_model('completed_app')
+    
         # Stage 2: Document upload (only for those who completed app)
         completed_app_mask = self.df['completed_app'] == 1
         self.models['doc_upload'], self.scalers['doc_upload'], self.probabilities['doc_upload'] = \
-            self.create_dropoff_model('uploaded_docs', completed_app_mask)
-        
-        # Add probabilities to dataframe
+        self.create_dropoff_model('uploaded_docs', completed_app_mask)
+    
+        # Stage 3: Underwriting passage (only for those who uploaded docs)
+        uploaded_docs_mask = self.df['uploaded_docs'] == 1
+        self.models['underwriting'], self.scalers['underwriting'], self.probabilities['underwriting'] = \
+        self.create_dropoff_model('passed_underwriting', uploaded_docs_mask)
+    
+        # Stage 4: Funding (only for those who passed underwriting)
+        passed_uw_mask = self.df['passed_underwriting'] == 1
+        self.models['funding'], self.scalers['funding'], self.probabilities['funding'] = \
+        self.create_dropoff_model('funded', passed_uw_mask)
+    
+    # Add all probabilities to dataframe
         self.df['prob_complete_app'] = self.probabilities['app_completion']
         self.df.loc[completed_app_mask, 'prob_upload_docs'] = self.probabilities['doc_upload']
-        print(f"train_all_model : {self.df}")
+        self.df.loc[uploaded_docs_mask, 'prob_underwriting'] = self.probabilities['underwriting']
+        self.df.loc[passed_uw_mask, 'prob_funding'] = self.probabilities['funding']
     
-    def calculate_abandonment_risk(self, row):
-        """Calculate overall risk of abandonment"""
-        risk_score = 0
+    def calculate_abandonment_risk(self,row):
+    # Get dropout probabilities at each stage (prob of NOT continuing)
         
-        if row['credit_score'] < 650:
-            risk_score += 0.3
-        if row['dti_ratio'] > 0.43:
-            risk_score += 0.2
-        if row['loan_amount'] > 50000:
-            risk_score += 0.1
-        if row['employment_status'] == 'Unemployed':
-            risk_score += 0.3
-        
-        if 'prob_complete_app' in row and pd.notna(row['prob_complete_app']):
-            risk_score += (1 - row['prob_complete_app']) * 0.2
-        
-        print(f"The risk_score : {risk_score}")
-        return min(risk_score, 1.0)
+        p_app = row.get('prob_complete_app', None)
+        p_doc = row.get('prob_upload_docs', None)
+        p_under = row.get('prob_underwriting', None)
+        p_fund = row.get('prob_funding', None)
+
+    # If any stage's probability is missing, assume zero dropout for conservative estimate
+        survival_probs = [
+            p for p in [p_app, p_doc, p_under, p_fund] if p is not None
+        ]
+
+        # Multiply all survival probabilities
+        survival = 1.0
+        for s in survival_probs:
+            survival *= s
+
+        # Abandonment risk is 1 - cumulative survival
+        abandonment_risk = 1 - survival
+
+        return round(abandonment_risk, 4)
+
     
     def create_risk_scores(self):
         """Create abandonment risk scores"""
@@ -138,12 +156,14 @@ class PredictiveDropoffAnalysis:
     def get_cohort_analysis(self):
         """Get cohort analysis results"""
         return self.df.groupby(['age_group', 'dti_group', 'credit_group', 'income_band', 'loan_amount_group', 'employment_status']).agg({
-        'abandonment_risk': 'mean',
+        
         'completed_app': 'mean',
         'uploaded_docs': 'mean',
         'passed_underwriting': 'mean',
         'funded': 'mean',
+        'abandonment_risk': 'mean',
         'applicant_id': 'count'
+
     }).round(3).reset_index()
     
     def get_feature_importance(self):

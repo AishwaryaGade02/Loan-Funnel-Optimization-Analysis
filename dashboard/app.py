@@ -2,6 +2,13 @@ import streamlit as st
 import os
 import sys
 
+st.set_page_config(
+    page_title="Loan Funnel Analytics",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from pages.overview import show_overview
@@ -10,12 +17,30 @@ from pages.dropout_analysis import show_dropout_analysis
 from pages.economic_impact import show_economic_impact
 from pages.policy_comparision import show_policy_comparision
 
-st.set_page_config(
-    page_title="Loan Funnel Analytics",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.markdown("""
+<style>
+    /* Make all text black */
+    .stApp, .stApp p, .stApp div, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5 {
+        color: black !important;
+    }
+    
+    /* Make plotly chart text and axis black */
+    .js-plotly-plot .plotly text,
+    .gtitle, .ytitle, .xtitle, 
+    .xtick text, .ytick text {
+        fill: black !important;
+        color: black !important;
+    }
+    
+    /* Make axis lines black */
+    .xgrid line, .ygrid line,
+    .xtick, .ytick {
+        stroke: black !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
 
 DB_PATH = "data/loan_funnel.db"
 ALERT_LOG_PATH = "data/alerts_log.txt"
@@ -52,7 +77,7 @@ with col1:
 with col2:
     approval_btn = st.button("✅ Approval Analysis")
 with col3:
-    dropout_btn = st.button("❌ Dropout Analysis")
+    dropout_btn = st.button("❌ Risk Analysis")
 with col4:
     economic_btn = st.button("💰 Economic Impact")
 with col5:

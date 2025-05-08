@@ -64,7 +64,7 @@ def show_economic_impact(DB_PATH):
         )
         
         # Visualizations
-        st.subheader("Economic Impact Visualizations")
+        #st.subheader("Economic Impact Visualizations")
         
         tab1, tab2, tab3 = st.tabs(["Lost Revenue by Cohort", "ROI Analysis", "Stage-wise Losses"])
         
@@ -108,7 +108,7 @@ def show_economic_impact(DB_PATH):
         
         with tab3:
             # Stage-wise losses for top cohorts
-            st.subheader("Stage-wise Lost Revenue")
+            #st.subheader("Stage-wise Lost Revenue")
             
             # Prepare data for stage-wise visualization
             stage_columns = [col for col in top_10_cohorts.columns if col.startswith('lost_revenue_') and col != 'lost_revenue_funded']
@@ -136,7 +136,7 @@ def show_economic_impact(DB_PATH):
             fig.update_layout(
                 xaxis_title='Cohort',
                 yaxis_title='Lost Revenue ($)',
-                xaxis_tickangle=-45
+                xaxis_tickangle=0
             )
             st.plotly_chart(fig, use_container_width=True)
         

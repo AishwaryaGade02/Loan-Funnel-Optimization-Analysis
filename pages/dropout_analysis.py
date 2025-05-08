@@ -11,7 +11,7 @@ from src.predictive_analysis import run_predictive_analysis
 
 def show_dropout_analysis(DB_PATH):
     if os.path.exists(DB_PATH):
-        st.header("❌ Dropout Analysis")
+        st.header("❌ Risk Analysis")
         
         loan_data = pd.read_csv('./data/loan_funnel_data.csv')
         results = run_predictive_analysis(loan_data)
@@ -32,7 +32,7 @@ def show_dropout_analysis(DB_PATH):
             st.metric("High Risk Applications", high_risk)
 
         # Cohort Analysis Section
-        st.subheader("📊 Dropout Analysis Explorer")
+        st.subheader("📊 Risk Analysis Explorer")
 
         # Filters - Add new filters for income, loan amount, and employment
         col1, col2 = st.columns(2)
@@ -40,13 +40,13 @@ def show_dropout_analysis(DB_PATH):
             selected_age = st.multiselect(
                 "Select Age Groups",
                 options=cohort_analysis['age_group'].unique(),
-                default=cohort_analysis['age_group'].unique()[0]
+                default=cohort_analysis['age_group'].unique()
             )
             
             selected_income = st.multiselect(
                 "Select Income Bands",
                 options=cohort_analysis['income_band'].unique(),
-                default=cohort_analysis['income_band'].unique()[0]
+                default=cohort_analysis['income_band'].unique()[2]
             )
             
             selected_employment = st.multiselect(
@@ -65,7 +65,7 @@ def show_dropout_analysis(DB_PATH):
             selected_credit = st.multiselect(
                 "Select Credit Groups",
                 options=cohort_analysis['credit_group'].unique(),
-                default=cohort_analysis['credit_group'].unique()[0]
+                default=cohort_analysis['credit_group'].unique()[4]
             )
             
             selected_loan_amount = st.multiselect(
@@ -85,22 +85,28 @@ def show_dropout_analysis(DB_PATH):
         ]
 
         # Display cohort table
-        st.markdown("#### Dropout Performance Metrics")
+        st.markdown("#### Risk Performance Metrics")
         st.dataframe(
-            filtered_cohort.style.background_gradient(
-                subset=['abandonment_risk', 'funded'],
-                cmap='RdYlGn_r'
-            ).format({
-                'abandonment_risk': '{:.1%}',
-                'completed_app': '{:.1%}',
-                'uploaded_docs': '{:.1%}',
-                'passed_underwriting': '{:.1%}',
-                'funded': '{:.1%}'
-            })
+            filtered_cohort.style
+            .background_gradient(
+            subset=['abandonment_risk'],
+            cmap='RdYlGn_r'  # Higher values (bad) are red
         )
-
+        .background_gradient(
+            subset=['funded'],
+            cmap='RdYlGn'    # Higher values (good) are green
+        )
+        .format({
+            'abandonment_risk': '{:.1%}',
+            'completed_app': '{:.1%}',
+            'uploaded_docs': '{:.1%}',
+            'passed_underwriting': '{:.1%}',
+            'funded': '{:.1%}'
+        }))
+        # Add this right before or after your dataframe display
+        st.info("**Note:** Abandonment risk values shown are predictive model estimates based on applicant dropouts, while funding rates represent actual observed outcomes. Variance between predicted risk and actual results is expected.")
         # Interactive feature selection for Abandonment Risk
-        st.subheader("🧩 Explore Abandonment Risk Relationships")
+        st.subheader("🧩 Abandonment Risk Relationships")
 
         col1, col2 = st.columns(2)
         with col1:

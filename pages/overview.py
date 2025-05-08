@@ -51,12 +51,12 @@ def show_overview(DB_PATH, ALERT_LOG_PATH):
         )
         fig.update_traces(line_color='#1f77b4', line_width=3)
         st.plotly_chart(fig, use_container_width=True)
-        
+
         # Funnel Analysis Section
-        st.header("🔄 Funnel Stage Analysis")
+        st.subheader("🔄 Funnel Stage Analysis")
         
         # Applicants at each stage
-        st.subheader("Number of Applicants at Each Stage")
+        #st.subheader("Number of Applicants at Each Stage")
         funnel_order = ["Application Started", "Documents Uploaded", "Underwriting Review", "Approved", "Funded"]
         conversion_df = get_total_applicants_passing_each_stage(DB_PATH)
         conversion_df['funnel_stage'] = pd.Categorical(conversion_df['funnel_stage'], categories=funnel_order, ordered=True)
@@ -96,7 +96,21 @@ def show_overview(DB_PATH, ALERT_LOG_PATH):
             )
 
         # Timing Analysis
-        st.header("⏱️ Process Timing Analysis")
+        st.subheader("⏱️ Process Timing Analysis")
+        st.markdown("""
+        <style>
+            [data-testid="stMetricValue"] {
+            font-size: 1.8rem !important;
+        }
+        [data-testid="stMetricLabel"] {
+        font-size: 0.8rem !important;
+        font-weight: 400 !important;
+        }
+        [data-testid="stMetricDelta"] {
+        font-size: 0.8rem !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         col1, col2 = st.columns(2)
 
         with col1:
@@ -110,7 +124,7 @@ def show_overview(DB_PATH, ALERT_LOG_PATH):
         
 
         # System Monitoring
-        st.header("🚨 System Monitoring")
+        st.subheader("🚨 System Monitoring")
         metrics = get_current_metrics(DB_PATH)
         alerts = check_alerts(metrics)
 
